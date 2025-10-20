@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
                 errores = 0
                 contador_encontradas = 0
 
-                Toast.makeText(this, "Te rendiste", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Te Rendiste", Toast.LENGTH_SHORT).show()
                 btn_iniciar.isEnabled = true
                 btn_rendirse.isEnabled = false
             } else {
