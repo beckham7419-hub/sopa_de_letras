@@ -11,15 +11,15 @@ import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
     var jugando = false
-    val palabras_partida_actual = mutableListOf<String>()
+    val palabras_partida_actual = mutableListOf<String>() // Lista de palabras seleccionadas aleatoriamente para la partida
     lateinit var casillas: Array<TextView>
     lateinit var palabras: Array<String>
     lateinit var letras: Array<String>
-    val tablero = Array(10) { Array(10) { "" } }
+    val tablero = Array(10) { Array(10) { "" } } // Tablero de 10x10, inicialmente vacío
     var errores = 0
     var contador_encontradas = 0
-    val palabras_encontradas = BooleanArray(5) { false }
-    val posicion_palabras = Array(5) { mutableListOf<Int>() }
+    val palabras_encontradas = BooleanArray(5) { false } // Control de palabras encontradas
+    val posicion_palabras = Array(5) { mutableListOf<Int>() } // Guarda las posiciones (índices) de las letras que forman cada palabra
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btn_iniciar = findViewById<Button>(R.id.btn_iniciar)
+        val btn_rendirse = findViewById<Button>(R.id.btn_rendirse)
         val txtview_palabra_aleatoria_n1 = findViewById<TextView>(R.id.txtview_palabra_aleatoria_n1)
         val txtview_palabra_aleatoria_n2 = findViewById<TextView>(R.id.txtview_palabra_aleatoria_n2)
         val txtview_palabra_aleatoria_n3 = findViewById<TextView>(R.id.txtview_palabra_aleatoria_n3)
@@ -143,15 +144,19 @@ class MainActivity : AppCompatActivity() {
         palabras = arrayOf("SOL","MAR","LUZ","PEZ","CASA","GATO","PERRO","LUNA","AGUA","FLOR","ARBOL","CIELO","NUBE","VIENTO","TIERRA","FUEGO","ROCA","RIO","LAGO","MONTE","VALLE","ISLA","PLAYA","ONDA","ARENA","CORAL","ALGA","PINO","ROBLE","HOJA","RAMA","RAIZ","FRUTO","SEMILLA","JARDIN","CAMPO","SELVA","BOSQUE","PRADERA","DESIERTO","NIEVE","HIELO","ESTRELLA","COMETA","PLANETA","COSMOS","GALAXY","METEOR","ORBITA","ESPACIO")
         letras = arrayOf("A","B","C","D","E","F","G","H","I","J","K","L","M","N","Ñ","O","P","Q","R","S","T","U","V","W","X","Y","Z")
 
+        btn_iniciar.isEnabled = true
+        btn_rendirse.isEnabled = false
+
         btn_iniciar.setOnClickListener {
             btn_iniciar.isEnabled = false
+            btn_rendirse.isEnabled = true
             jugando = true
 
-            casillas.forEach { casilla ->
+            casillas.forEach { casilla -> // Pone todas las letras a blanco
                 casilla.setTextColor(android.graphics.Color.WHITE)
             }
 
-            palabras_partida_actual.clear()
+            palabras_partida_actual.clear() // Selecciona 5 palabras aleatorias únicas
             while (palabras_partida_actual.size < 5) {
                 val palabra = palabras.random()
                 if (!palabras_partida_actual.contains(palabra)) {
@@ -174,6 +179,20 @@ class MainActivity : AppCompatActivity() {
             txtview_palabras_encontradas.text = "0"
         }
 
+        btn_rendirse.setOnClickListener {
+            if (jugando) {
+                jugando = false
+                errores = 0
+                contador_encontradas = 0
+
+                Toast.makeText(this, "Te rendiste", Toast.LENGTH_SHORT).show()
+                btn_iniciar.isEnabled = true
+                btn_rendirse.isEnabled = false
+            } else {
+                Toast.makeText(this, "Presiona 'Iniciar'", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         casillas.forEachIndexed { i, casilla ->
             casilla.setOnClickListener {
                 if (jugando == false) {
@@ -182,14 +201,15 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 var encontrado = false
-                for (ind_palabra in 0..4) {
+
+                for (ind_palabra in 0..4) { // Recorre las 5 palabras
                     if (palabras_encontradas[ind_palabra]) continue
 
-                    if (i in posicion_palabras[ind_palabra]) {
+                    if (i in posicion_palabras[ind_palabra]) { // Comprueba si el índice pulsado pertenece a alguna palabra
                         encontrado = true
                         palabras_encontradas[ind_palabra] = true
 
-                        for (pos in posicion_palabras[ind_palabra]) {
+                        for (pos in posicion_palabras[ind_palabra]) { // Pinta la palabra encontrada a verde
                             casillas[pos].setTextColor(android.graphics.Color.GREEN)
                         }
 
@@ -200,17 +220,19 @@ class MainActivity : AppCompatActivity() {
                         if (contador_encontradas == 5) {
                             Toast.makeText(this, "Ganaste", Toast.LENGTH_LONG).show()
                             btn_iniciar.isEnabled = true
+                            btn_rendirse.isEnabled = false
                             jugando = false
                         }
                     }
                 }
-                if (!encontrado) {
+                if (!encontrado) { // Si no era parte de una palabra, cuenta errores
                     errores++
                     txtview_errores.text = errores.toString()
 
                     if (errores >= 5) {
                         Toast.makeText(this, "Perdiste", Toast.LENGTH_LONG).show()
                         btn_iniciar.isEnabled = true
+                        btn_rendirse.isEnabled = false
                         jugando = false
                     }
                 }
@@ -219,24 +241,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun colocarpalabras() {
-        for (i in 0..9) {
-            for (j in 0..9) {
-                tablero[i][j] = ""
+        for (fil in 0..9) {
+            for (column in 0..9) {
+                tablero[fil][column] = ""
             }
         }
 
-        for (i in 0..4) {
-            posicion_palabras[i].clear()
-            palabras_encontradas[i] = false
+        for (ind_palabra in 0..4) { // Reinicia posiciones y estados
+            posicion_palabras[ind_palabra].clear()
+            palabras_encontradas[ind_palabra] = false
         }
 
-        for (i in 0..4) {
-            val palabra = palabras_partida_actual[i]
+        for (ind_palabra in 0..4) {
+            val palabra = palabras_partida_actual[ind_palabra]
             var colocada = false
             var intentos = 0
 
             while (!colocada && intentos < 100) {
-                val direccion = (0..1).random()
+                val direccion = (0..1).random() // 0 = horizontal, 1 = vertical
                 val fila = (0..9).random()
                 val columna = (0..9).random()
 
@@ -248,12 +270,12 @@ class MainActivity : AppCompatActivity() {
 
                 if (cabe) {
                     var espacio_libre = true
-                    for (i in palabra.indices) {
-                        val letra = palabra[i].toString()
+                    for (ind_letra in palabra.indices) { // Revisa que el espacio está libre
+                        val letra = palabra[ind_letra].toString()
                         val letra_tablero = if (direccion == 0) {
-                            tablero[fila][columna + i]
+                            tablero[fila][columna + ind_letra]
                         } else {
-                            tablero[fila + i][columna]
+                            tablero[fila + ind_letra][columna]
                         }
 
                         if (letra_tablero != "" && letra_tablero != letra) {
@@ -262,18 +284,18 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    if (espacio_libre) {
-                        for (i in palabra.indices) {
-                            val letra = palabra[i].toString()
+                    if (espacio_libre) { // Si hay espacio, coloca la palabra letra por letra
+                        for (indiceLetra in palabra.indices) {
+                            val letra = palabra[indiceLetra].toString()
 
                             if (direccion == 0) {
-                                tablero[fila][columna + i] = letra
-                                val numeroCasilla = (fila * 10) + (columna + i)
-                                posicion_palabras[i].add(numeroCasilla)
+                                tablero[fila][columna + indiceLetra] = letra
+                                val numeroCasilla = (fila * 10) + (columna + indiceLetra)
+                                posicion_palabras[ind_palabra].add(numeroCasilla)
                             } else {
-                                tablero[fila + i][columna] = letra
-                                val numeroCasilla = ((fila + i) * 10) + columna
-                                posicion_palabras[i].add(numeroCasilla)
+                                tablero[fila + indiceLetra][columna] = letra
+                                val numeroCasilla = ((fila + indiceLetra) * 10) + columna
+                                posicion_palabras[ind_palabra].add(numeroCasilla)
                             }
                         }
                         colocada = true
@@ -293,7 +315,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var indice = 0
+        var indice = 0 // Pasa las letras del tablero al array de TextViews
         for (i in 0..9) {
             for (j in 0..9) {
                 casillas[indice].text = tablero[i][j]
